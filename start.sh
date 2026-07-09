@@ -1,5 +1,5 @@
 #!/bin/ash
-cd /mnt/server
+cd cd /home/container
 
 echo -e "=== Vérification des mises à jour Paper ==="
 bash update.sh
