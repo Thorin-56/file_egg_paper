@@ -27,10 +27,16 @@ echo -e "Recherche du dernier build stable pour Paper ${MINECRAFT_VERSION}..."
 
 BUILDS_JSON=`curl --user-agent "${USER_AGENT}" -s https://fill.papermc.io/v3/projects/${PROJECT}/versions/${MINECRAFT_VERSION}/builds`
 
-DOWNLOAD_URL=`echo "${BUILDS_JSON}" | ${JQ} -r '[.[] | select(.channel == "STABLE")][0].downloads."server:default".url'`
+DOWNLOAD_URL=`echo "${BUILDS_JSON}" | ${JQ} -r '
+    ([.[] | select(.channel == "STABLE")][0] // .[0]) | .downloads."server:default".url
+'`
+BUILD_CHANNEL=`echo "${BUILDS_JSON}" | ${JQ} -r '
+    ([.[] | select(.channel == "STABLE")][0] // .[0]) | .channel
+'`
+echo -e "Build sélectionné avec le canal : ${BUILD_CHANNEL}"
 
 if [ -z "${DOWNLOAD_URL}" ] || [ "${DOWNLOAD_URL}" == "null" ]; then
-    echo -e "Aucun build stable trouvé. Le serveur va démarrer avec le jar actuel."
+    echo -e "Aucun build trouvé. Le serveur va démarrer avec le jar actuel."
     exit 0
 fi
 
@@ -40,5 +46,14 @@ fi
 
 echo -e "Téléchargement en cours..."
 curl --user-agent "${USER_AGENT}" -o ${SERVER_JARFILE} ${DOWNLOAD_URL}
+
+if [ ! -s ${SERVER_JARFILE} ]; then
+    echo -e "ERREUR : le téléchargement a échoué ou le fichier est vide."
+    if [ -f ${SERVER_JARFILE}.old ]; then
+        echo -e "Restauration de l'ancien jar."
+        mv ${SERVER_JARFILE}.old ${SERVER_JARFILE}
+    fi
+    exit 1
+fi
 
 echo -e "Mise à jour terminée."
