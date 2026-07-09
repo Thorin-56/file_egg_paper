@@ -1,12 +1,14 @@
 #!/bin/ash
-# Paper Update Script - vérifie et télécharge le dernier build à chaque démarrage
-
 PROJECT=paper
 USER_AGENT="Pterodactyl (https://Pterodactyl.io)"
 
-cd /mnt/server
+cd /home/container
 
 echo -e "Checking latest build for Paper ${MINECRAFT_VERSION}..."
+
+if ! which jq >/dev/null 2>&1; then
+    apk add --no-cache jq 2>/dev/null
+fi
 
 LATEST_BUILD=`curl --user-agent "${USER_AGENT}" -s https://fill.papermc.io/v3/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r '.builds' | jq -r '.[0]'`
 
